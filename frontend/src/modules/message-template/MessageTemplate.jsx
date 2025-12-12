@@ -9,6 +9,8 @@ const MessageTemplate = () => {
   const [variables, setVariables] = useState({})
   const [generatedMessage, setGeneratedMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isEditingPreview, setIsEditingPreview] = useState(false)
+  const [editableMessage, setEditableMessage] = useState('')
   
   // State cho quản lý template
   const [activeTab, setActiveTab] = useState('use') // 'use' hoặc 'manage'
@@ -78,15 +80,50 @@ const MessageTemplate = () => {
         templateVars[varName] = ''
       })
       setVariables(templateVars)
-      setGeneratedMessage('')
+      
+      // Auto-generate preview with empty variables
+      generatePreviewWithTemplate(template.content, templateVars)
     }
   }
 
   const handleVariableChange = (varName, value) => {
-    setVariables(prev => ({
-      ...prev,
+    const newVariables = {
+      ...variables,
       [varName]: value
-    }))
+    }
+    setVariables(newVariables)
+    
+    // Auto-update preview when variables change
+    const template = templates.find(t => t.id === parseInt(selectedTemplate))
+    if (template) {
+      generatePreviewWithTemplate(template.content, newVariables)
+    }
+  }
+
+  // Generate preview locally without API call for instant feedback
+  const generatePreviewWithTemplate = (templateContent, vars) => {
+    let preview = templateContent
+    Object.keys(vars).forEach(varName => {
+      const regex = new RegExp(`\\{\\{${varName}\\}\\}`, 'g')
+      preview = preview.replace(regex, vars[varName] || `{{${varName}}}`)
+    })
+    setGeneratedMessage(preview)
+    setEditableMessage(preview)
+  }
+
+  const handlePreviewEdit = (value) => {
+    setEditableMessage(value)
+  }
+
+  const toggleEditMode = () => {
+    if (isEditingPreview) {
+      // Save edited content back to generated message
+      setGeneratedMessage(editableMessage)
+    } else {
+      // Enter edit mode
+      setEditableMessage(generatedMessage)
+    }
+    setIsEditingPreview(!isEditingPreview)
   }
 
   const generateMessage = async () => {
@@ -107,7 +144,8 @@ const MessageTemplate = () => {
   }
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedMessage)
+    const textToCopy = isEditingPreview ? editableMessage : generatedMessage
+    navigator.clipboard.writeText(textToCopy)
     alert('Message copied to clipboard!')
   }
 
@@ -602,8 +640,54 @@ const MessageTemplate = () => {
                 <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#111827' }}>
                   Live Preview
                 </h3>
+                {isEditingPreview && (
+                  <span style={{ 
+                    background: '#fef3c7', 
+                    color: '#92400e', 
+                    padding: '2px 6px', 
+                    borderRadius: '10px', 
+                    fontSize: '10px',
+                    fontWeight: '500'
+                  }}>
+                    Editing
+                  </span>
+                )}
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
+                {generatedMessage && (
+                  <button 
+                    onClick={toggleEditMode}
+                    style={{
+                      padding: '8px 12px',
+                      background: isEditingPreview ? '#059669' : '#6b7280',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = isEditingPreview ? '#047857' : '#4b5563'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = isEditingPreview ? '#059669' : '#6b7280'
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      {isEditingPreview ? (
+                        <path d="M20 6L9 17l-5-5"/>
+                      ) : (
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      )}
+                    </svg>
+                    {isEditingPreview ? 'Save' : 'Edit'}
+                  </button>
+                )}
                 <button 
                   onClick={generateMessage}
                   disabled={loading}
@@ -633,7 +717,7 @@ const MessageTemplate = () => {
                     <polyline points="1 20 1 14 7 14"/>
                     <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
                   </svg>
-                  {loading ? 'Updating...' : 'Update Preview'}
+                  {loading ? 'Updating...' : 'Refresh'}
                 </button>
                 {generatedMessage && (
                   <button 
@@ -675,16 +759,38 @@ const MessageTemplate = () => {
               minHeight: '180px'
             }}>
               {generatedMessage ? (
-                <pre style={{ 
-                  whiteSpace: 'pre-wrap', 
-                  margin: 0, 
-                  fontSize: '14px', 
-                  color: '#111827',
-                  fontFamily: 'inherit',
-                  lineHeight: '1.6'
-                }}>
-                  {generatedMessage}
-                </pre>
+                isEditingPreview ? (
+                  <textarea
+                    value={editableMessage}
+                    onChange={(e) => handlePreviewEdit(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      minHeight: '200px',
+                      border: 'none',
+                      background: 'transparent',
+                      resize: 'none',
+                      outline: 'none',
+                      fontSize: '14px',
+                      color: '#111827',
+                      fontFamily: 'inherit',
+                      lineHeight: '1.6',
+                      padding: 0
+                    }}
+                    placeholder="Edit your message here..."
+                  />
+                ) : (
+                  <pre style={{ 
+                    whiteSpace: 'pre-wrap', 
+                    margin: 0, 
+                    fontSize: '14px', 
+                    color: '#111827',
+                    fontFamily: 'inherit',
+                    lineHeight: '1.6'
+                  }}>
+                    {generatedMessage}
+                  </pre>
+                )
               ) : (
                 <div style={{ 
                   display: 'flex',
@@ -702,10 +808,10 @@ const MessageTemplate = () => {
                     <line x1="16" y1="17" x2="8" y2="17"/>
                   </svg>
                   <p style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '500' }}>
-                    {selectedTemplate ? 'Ready to preview' : 'Select a template to start'}
+                    Select a template to start
                   </p>
                   <p style={{ margin: 0, fontSize: '13px' }}>
-                    {selectedTemplate ? 'Fill variables and click "Update Preview"' : 'Choose from templates on the left'}
+                    Preview will appear instantly when you choose a template
                   </p>
                 </div>
               )}
