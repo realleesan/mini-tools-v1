@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import logo from '../assets/logo.png'
 
 const Layout = ({ children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -42,9 +43,34 @@ const Layout = ({ children }) => {
           justifyContent: 'space-between'
         }}>
           {!sidebarCollapsed && (
-            <h2 style={{ margin: 0, fontSize: '16px', color: '#fff', fontWeight: '500' }}>
-              Mini Tools Suite
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <img 
+                src={logo} 
+                alt="MistyDev Logo" 
+                style={{ 
+                  width: '32px', 
+                  height: '32px', 
+                  borderRadius: '6px',
+                  objectFit: 'cover'
+                }} 
+              />
+              <h2 style={{ margin: 0, fontSize: '16px', color: '#fff', fontWeight: '500' }}>
+                Mini Tools Suite
+              </h2>
+            </div>
+          )}
+          {sidebarCollapsed && (
+            <img 
+              src={logo} 
+              alt="MistyDev Logo" 
+              style={{ 
+                width: '24px', 
+                height: '24px', 
+                borderRadius: '4px',
+                objectFit: 'cover',
+                margin: '0 auto'
+              }} 
+            />
           )}
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -140,20 +166,17 @@ const Layout = ({ children }) => {
             <span style={{ fontSize: '13px', color: '#666' }}>
               {new Date().toLocaleDateString('vi-VN')}
             </span>
-            <div style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '3px',
-              background: '#000',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: '12px',
-              fontWeight: '500'
-            }}>
-              U
-            </div>
+            <img 
+              src={logo} 
+              alt="MistyDev Logo" 
+              style={{ 
+                width: '32px', 
+                height: '32px', 
+                borderRadius: '6px',
+                objectFit: 'cover',
+                border: '2px solid #f0f0f0'
+              }} 
+            />
           </div>
         </div>
 

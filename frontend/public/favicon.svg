@@ -1,0 +1,11 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Nền tròn màu trắng -->
+  <circle cx="16" cy="16" r="15" fill="#ffffff" stroke="#e0e0e0" stroke-width="1"/>
+  
+  <!-- Logo chữ M stylized -->
+  <text x="16" y="22" font-family="Arial, sans-serif" font-size="18" font-weight="bold" 
+        text-anchor="middle" fill="#000000">M</text>
+  
+  <!-- Dấu chấm nhỏ để tạo điểm nhấn -->
+  <circle cx="24" cy="8" r="3" fill="#ff6b35"/>
+</svg>
