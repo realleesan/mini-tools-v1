@@ -15,7 +15,7 @@ const Home = () => {
     },
     {
       title: 'Active Tools',
-      value: '1',
+      value: '2',
       color: '#000'
     },
     {
@@ -37,6 +37,11 @@ const Home = () => {
       name: 'Create Message',
       description: 'Use existing templates to create messages',
       path: '/message-template'
+    },
+    {
+      name: 'Generate Quote',
+      description: 'Create professional quotes from templates',
+      path: '/quote-generator'
     },
     {
       name: 'Manage Templates',

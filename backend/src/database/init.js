@@ -67,6 +67,33 @@ function initTables() {
     )
   `)
 
+  // Bảng quote templates
+  db.run(`
+    CREATE TABLE IF NOT EXISTS quote_templates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      template_path TEXT NOT NULL,
+      fields TEXT NOT NULL,
+      category TEXT DEFAULT 'general',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+
+  // Bảng quotes
+  db.run(`
+    CREATE TABLE IF NOT EXISTS quotes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      template_id INTEGER,
+      customer_name TEXT,
+      quote_data TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      format TEXT DEFAULT 'docx',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (template_id) REFERENCES quote_templates (id)
+    )
+  `)
+
   // Add industry column if it doesn't exist (for existing databases)
   db.run(`ALTER TABLE message_templates ADD COLUMN industry TEXT DEFAULT 'general'`, (err) => {
     // Ignore error if column already exists
@@ -153,6 +180,50 @@ function initTables() {
       })
       
       console.log('Đã thêm dữ liệu mẫu cho message templates')
+    }
+  })
+
+  // Insert sample quote templates
+  db.get("SELECT COUNT(*) as count FROM quote_templates", (err, row) => {
+    if (row && row.count === 0) {
+      const sampleQuoteTemplates = [
+        {
+          name: 'Basic Service Quote',
+          fields: JSON.stringify([
+            { name: 'customerName', label: 'Customer Name', type: 'text', required: true },
+            { name: 'companyName', label: 'Company Name', type: 'text', required: true },
+            { name: 'serviceName', label: 'Service Name', type: 'text', required: true },
+            { name: 'description', label: 'Service Description', type: 'textarea', required: true },
+            { name: 'price', label: 'Price', type: 'number', required: true },
+            { name: 'validUntil', label: 'Valid Until', type: 'date', required: true }
+          ]),
+          category: 'service',
+          template_path: 'sample_service_quote.docx'
+        },
+        {
+          name: 'Product Quote',
+          fields: JSON.stringify([
+            { name: 'customerName', label: 'Customer Name', type: 'text', required: true },
+            { name: 'companyName', label: 'Company Name', type: 'text', required: true },
+            { name: 'productName', label: 'Product Name', type: 'text', required: true },
+            { name: 'quantity', label: 'Quantity', type: 'number', required: true },
+            { name: 'unitPrice', label: 'Unit Price', type: 'number', required: true },
+            { name: 'totalPrice', label: 'Total Price', type: 'number', required: true },
+            { name: 'deliveryDate', label: 'Delivery Date', type: 'date', required: true }
+          ]),
+          category: 'product',
+          template_path: 'sample_product_quote.docx'
+        }
+      ]
+
+      sampleQuoteTemplates.forEach(template => {
+        db.run(
+          "INSERT INTO quote_templates (name, fields, category, template_path) VALUES (?, ?, ?, ?)",
+          [template.name, template.fields, template.category, template.template_path]
+        )
+      })
+      
+      console.log('Đã thêm dữ liệu mẫu cho quote templates')
     }
   })
 }

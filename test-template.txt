@@ -1,0 +1,12 @@
+Đây là template test cho Quote Generator
+
+Tên khách hàng: {{customerName}}
+Công ty: {{companyName}}
+Sản phẩm: {{productName}}
+Giá: {{price}}
+Ngày hết hạn: {{validUntil}}
+
+Cảm ơn bạn đã quan tâm đến sản phẩm của chúng tôi!
+
+Trân trọng,
+{{salesName}}

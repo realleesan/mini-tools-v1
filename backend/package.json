@@ -8,10 +8,15 @@
     "build": "echo 'Backend build completed'"
   },
   "dependencies": {
-    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "sqlite3": "^5.1.6",
-    "handlebars": "^4.7.8"
+    "docx-pdf": "^0.0.1",
+    "docxtemplater": "^3.67.6",
+    "express": "^4.18.2",
+    "handlebars": "^4.7.8",
+    "mammoth": "^1.11.0",
+    "multer": "^2.0.2",
+    "pizzip": "^3.2.0",
+    "sqlite3": "^5.1.6"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
