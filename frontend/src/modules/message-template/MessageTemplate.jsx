@@ -12,6 +12,12 @@ const MessageTemplate = () => {
   const [isEditingPreview, setIsEditingPreview] = useState(false)
   const [editableMessage, setEditableMessage] = useState('')
   
+  // Saved Messages states
+  const [savedMessages, setSavedMessages] = useState([])
+  const [showSavedMessages, setShowSavedMessages] = useState(false)
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [saveDialogName, setSaveDialogName] = useState('')
+  
   // State cho quản lý template
   const [activeTab, setActiveTab] = useState('use') // 'use' hoặc 'manage'
   const [showForm, setShowForm] = useState(false)
@@ -38,6 +44,7 @@ const MessageTemplate = () => {
     fetchTemplates()
     fetchCategories()
     fetchIndustries()
+    fetchSavedMessages()
   }, [])
 
   const fetchCategories = async () => {
@@ -64,6 +71,15 @@ const MessageTemplate = () => {
       setTemplates(response.data)
     } catch (error) {
       console.error('Lỗi khi tải templates:', error)
+    }
+  }
+
+  const fetchSavedMessages = async () => {
+    try {
+      const response = await axios.get('/api/saved-messages')
+      setSavedMessages(response.data)
+    } catch (error) {
+      console.error('Lỗi khi tải saved messages:', error)
     }
   }
 
@@ -147,6 +163,84 @@ const MessageTemplate = () => {
     const textToCopy = isEditingPreview ? editableMessage : generatedMessage
     navigator.clipboard.writeText(textToCopy)
     alert('Message copied to clipboard!')
+  }
+
+  // Saved Messages functions
+  const handleSaveMessage = async () => {
+    if (!saveDialogName.trim()) {
+      alert('Please enter a name for the saved message')
+      return
+    }
+
+    const template = templates.find(t => t.id === parseInt(selectedTemplate))
+    if (!template) {
+      alert('No template selected')
+      return
+    }
+
+    const finalMessage = isEditingPreview ? editableMessage : generatedMessage
+    if (!finalMessage.trim()) {
+      alert('No message to save')
+      return
+    }
+
+    try {
+      await axios.post('/api/saved-messages', {
+        name: saveDialogName.trim(),
+        template_id: template.id,
+        template_name: template.name,
+        variables: variables,
+        final_message: finalMessage,
+        category: template.category,
+        industry: template.industry
+      })
+      
+      alert('Message saved successfully!')
+      setSaveDialogName('')
+      setShowSaveDialog(false)
+      fetchSavedMessages()
+    } catch (error) {
+      console.error('Error saving message:', error)
+      alert('Error saving message!')
+    }
+  }
+
+  const handleLoadSavedMessage = async (savedMessageId) => {
+    try {
+      const response = await axios.post(`/api/saved-messages/${savedMessageId}/load`)
+      const loadData = response.data
+      
+      // Set template
+      setSelectedTemplate(loadData.template_id?.toString() || '')
+      
+      // Set variables
+      setVariables(loadData.variables)
+      
+      // Set generated message
+      setGeneratedMessage(loadData.final_message)
+      setEditableMessage(loadData.final_message)
+      
+      // Close saved messages panel
+      setShowSavedMessages(false)
+      
+      alert('Saved message loaded successfully!')
+    } catch (error) {
+      console.error('Error loading saved message:', error)
+      alert('Error loading saved message!')
+    }
+  }
+
+  const handleDeleteSavedMessage = async (savedMessageId) => {
+    if (!confirm('Are you sure you want to delete this saved message?')) return
+
+    try {
+      await axios.delete(`/api/saved-messages/${savedMessageId}`)
+      alert('Saved message deleted successfully!')
+      fetchSavedMessages()
+    } catch (error) {
+      console.error('Error deleting saved message:', error)
+      alert('Error deleting saved message!')
+    }
   }
 
   // Functions cho quản lý template
@@ -254,30 +348,58 @@ const MessageTemplate = () => {
               {filteredTemplates.length} of {templates.length}
             </p>
           </div>
-          <button 
-            onClick={() => setShowForm(!showForm)}
-            style={{
-              padding: '8px 14px',
-              background: '#111827',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '13px',
-              fontWeight: '500',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => e.target.style.background = '#374151'}
-            onMouseLeave={(e) => e.target.style.background = '#111827'}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12h14"/>
-            </svg>
-            New
-          </button>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button 
+              onClick={() => setShowSavedMessages(true)}
+              style={{
+                padding: '8px 10px',
+                background: '#10b981',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.background = '#059669'}
+              onMouseLeave={(e) => e.target.style.background = '#10b981'}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17,21 17,13 7,13 7,21"/>
+                <polyline points="7,3 7,8 15,8"/>
+              </svg>
+              Saved
+            </button>
+            <button 
+              onClick={() => setShowForm(!showForm)}
+              style={{
+                padding: '8px 14px',
+                background: '#111827',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.background = '#374151'}
+              onMouseLeave={(e) => e.target.style.background = '#111827'}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              New
+            </button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -655,38 +777,66 @@ const MessageTemplate = () => {
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {generatedMessage && (
-                  <button 
-                    onClick={toggleEditMode}
-                    style={{
-                      padding: '8px 12px',
-                      background: isEditingPreview ? '#059669' : '#6b7280',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = isEditingPreview ? '#047857' : '#4b5563'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = isEditingPreview ? '#059669' : '#6b7280'
-                    }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      {isEditingPreview ? (
-                        <path d="M20 6L9 17l-5-5"/>
-                      ) : (
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      )}
-                    </svg>
-                    {isEditingPreview ? 'Save' : 'Edit'}
-                  </button>
+                  <>
+                    <button 
+                      onClick={() => setShowSaveDialog(true)}
+                      style={{
+                        padding: '8px 12px',
+                        background: '#10b981',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => e.target.style.background = '#059669'}
+                      onMouseLeave={(e) => e.target.style.background = '#10b981'}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                        <polyline points="17,21 17,13 7,13 7,21"/>
+                        <polyline points="7,3 7,8 15,8"/>
+                      </svg>
+                      Save
+                    </button>
+                    <button 
+                      onClick={toggleEditMode}
+                      style={{
+                        padding: '8px 12px',
+                        background: isEditingPreview ? '#059669' : '#6b7280',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = isEditingPreview ? '#047857' : '#4b5563'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = isEditingPreview ? '#059669' : '#6b7280'
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        {isEditingPreview ? (
+                          <path d="M20 6L9 17l-5-5"/>
+                        ) : (
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        )}
+                      </svg>
+                      {isEditingPreview ? 'Save' : 'Edit'}
+                    </button>
+                  </>
                 )}
                 <button 
                   onClick={generateMessage}
@@ -1079,6 +1229,323 @@ const MessageTemplate = () => {
               fetchTemplates()
             }}
           />
+        )}
+
+        {/* Save Message Dialog */}
+        {showSaveDialog && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div style={{
+              background: 'white',
+              borderRadius: '8px',
+              padding: '24px',
+              width: '400px',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+            }}>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontWeight: '600', color: '#111827' }}>
+                Save Message
+              </h3>
+              
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '6px', 
+                  color: '#374151', 
+                  fontWeight: '500', 
+                  fontSize: '14px' 
+                }}>
+                  Name for saved message:
+                </label>
+                <input
+                  type="text"
+                  value={saveDialogName}
+                  onChange={(e) => setSaveDialogName(e.target.value)}
+                  placeholder="Enter a name for this message"
+                  style={{ 
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #d1d5db', 
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    outline: 'none'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#10b981'}
+                  onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button 
+                  onClick={() => {
+                    setShowSaveDialog(false)
+                    setSaveDialogName('')
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#6b7280',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#4b5563'}
+                  onMouseLeave={(e) => e.target.style.background = '#6b7280'}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSaveMessage}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#10b981',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#059669'}
+                  onMouseLeave={(e) => e.target.style.background = '#10b981'}
+                >
+                  Save Message
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Saved Messages Modal */}
+        {showSavedMessages && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <div style={{
+              background: 'white',
+              borderRadius: '8px',
+              padding: '24px',
+              width: '700px',
+              maxHeight: '80vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#111827' }}>
+                  Saved Messages ({savedMessages.length})
+                </h3>
+                <button 
+                  onClick={() => setShowSavedMessages(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#6b7280',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = '#f3f4f6'
+                    e.target.style.color = '#111827'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'none'
+                    e.target.style.color = '#6b7280'
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+              
+              <div style={{ flex: 1, overflowY: 'auto', marginRight: '-8px', paddingRight: '8px' }}>
+                {savedMessages.length === 0 ? (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    padding: '60px 20px',
+                    color: '#6b7280'
+                  }}>
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ margin: '0 auto 16px', opacity: 0.5 }}>
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                      <polyline points="17,21 17,13 7,13 7,21"/>
+                      <polyline points="7,3 7,8 15,8"/>
+                    </svg>
+                    <p style={{ margin: 0, fontSize: '16px', fontWeight: '500' }}>
+                      No saved messages yet
+                    </p>
+                    <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                      Create and save messages to reuse them later
+                    </p>
+                  </div>
+                ) : (
+                  savedMessages.map(savedMessage => (
+                    <div 
+                      key={savedMessage.id}
+                      style={{
+                        padding: '16px',
+                        margin: '0 0 12px 0',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        background: '#fff',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = '#f9fafb'
+                        e.target.style.borderColor = '#d1d5db'
+                        e.target.style.transform = 'translateY(-1px)'
+                        e.target.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = '#fff'
+                        e.target.style.borderColor = '#e5e7eb'
+                        e.target.style.transform = 'translateY(0)'
+                        e.target.style.boxShadow = 'none'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: '600', color: '#111827' }}>
+                            {savedMessage.name}
+                          </h4>
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                            <span style={{ 
+                              background: '#f3f4f6', 
+                              padding: '2px 8px', 
+                              borderRadius: '12px', 
+                              fontSize: '11px',
+                              color: '#6b7280',
+                              fontWeight: '500'
+                            }}>
+                              {savedMessage.template_name}
+                            </span>
+                            <span style={{ 
+                              background: '#e5e7eb', 
+                              padding: '2px 8px', 
+                              borderRadius: '12px', 
+                              fontSize: '11px',
+                              color: '#6b7280',
+                              fontWeight: '500'
+                            }}>
+                              {categories.find(c => c.name === savedMessage.category)?.label || savedMessage.category}
+                            </span>
+                            <span style={{ 
+                              background: '#ede9fe', 
+                              padding: '2px 8px', 
+                              borderRadius: '12px', 
+                              fontSize: '11px',
+                              color: '#7c3aed',
+                              fontWeight: '500'
+                            }}>
+                              {industries.find(i => i.name === savedMessage.industry)?.label || savedMessage.industry}
+                            </span>
+                          </div>
+                          <p style={{ 
+                            margin: 0, 
+                            fontSize: '13px', 
+                            color: '#6b7280',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            lineHeight: '1.4'
+                          }}>
+                            {savedMessage.final_message.substring(0, 100)}...
+                          </p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px', marginLeft: '12px' }}>
+                          <button 
+                            onClick={() => handleLoadSavedMessage(savedMessage.id)}
+                            style={{
+                              background: '#10b981',
+                              border: 'none',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              padding: '6px 12px',
+                              borderRadius: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => e.target.style.background = '#059669'}
+                            onMouseLeave={(e) => e.target.style.background = '#10b981'}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '4px' }}>
+                              <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z"/>
+                              <line x1="8" y1="1" x2="8" y2="4"/>
+                              <line x1="16" y1="1" x2="16" y2="4"/>
+                            </svg>
+                            Load
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteSavedMessage(savedMessage.id)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#6b7280',
+                              cursor: 'pointer',
+                              padding: '6px',
+                              borderRadius: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.background = '#fef2f2'
+                              e.target.style.color = '#dc2626'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.background = 'none'
+                              e.target.style.color = '#6b7280'
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="3,6 5,6 21,6"/>
+                              <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                              <line x1="10" y1="11" x2="10" y2="17"/>
+                              <line x1="14" y1="11" x2="14" y2="17"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

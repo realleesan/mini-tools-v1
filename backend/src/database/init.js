@@ -50,6 +50,23 @@ function initTables() {
     )
   `)
 
+  // Bảng saved messages
+  db.run(`
+    CREATE TABLE IF NOT EXISTS saved_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      template_id INTEGER,
+      template_name TEXT NOT NULL,
+      variables TEXT NOT NULL,
+      final_message TEXT NOT NULL,
+      category TEXT DEFAULT 'general',
+      industry TEXT DEFAULT 'general',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (template_id) REFERENCES message_templates (id)
+    )
+  `)
+
   // Add industry column if it doesn't exist (for existing databases)
   db.run(`ALTER TABLE message_templates ADD COLUMN industry TEXT DEFAULT 'general'`, (err) => {
     // Ignore error if column already exists
