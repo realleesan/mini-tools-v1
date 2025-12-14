@@ -15,7 +15,7 @@ const Home = () => {
     },
     {
       title: 'Active Tools',
-      value: '2',
+      value: '1',
       color: '#000'
     },
     {
@@ -27,7 +27,6 @@ const Home = () => {
 
   const recentActivity = [
     { action: 'Created message from "Customer Greeting" template', time: '5 minutes ago' },
-    { action: 'Updated "Product Quote" template', time: '1 hour ago' },
     { action: 'Created new "Thank You" template', time: '2 hours ago' },
     { action: 'Used "Follow Up" template', time: '3 hours ago' }
   ]
@@ -37,11 +36,6 @@ const Home = () => {
       name: 'Create Message',
       description: 'Use existing templates to create messages',
       path: '/message-template'
-    },
-    {
-      name: 'Generate Quote',
-      description: 'Create professional quotes from templates',
-      path: '/quote-generator'
     },
     {
       name: 'Manage Templates',

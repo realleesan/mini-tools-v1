@@ -106,12 +106,7 @@ async function insertDefaultData() {
         category: 'greeting',
         industry: 'technology'
       },
-      {
-        name: 'Product Quote - Real Estate',
-        content: 'Dear {{customerName}},\n\nBased on your requirements, here\'s the quote for {{propertyName}}:\n\n- Price: {{price}}\n- Location: {{location}}\n- Size: {{size}}\n- Available from: {{availableDate}}\n\nThis offer is valid for {{validDays}} days.\n\nBest regards,\n{{salesName}}',
-        category: 'quotation',
-        industry: 'real-estate'
-      },
+
       {
         name: 'Follow Up - E-commerce',
         content: 'Hi {{customerName}},\n\nI wanted to follow up on the {{productName}} you were interested in.\n\nWe currently have a special promotion running until {{promoEndDate}}.\n\nWould you like to schedule a call to discuss this further?\n\nBest,\n{{salesName}}',
