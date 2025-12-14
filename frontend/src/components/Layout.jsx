@@ -14,6 +14,10 @@ const Layout = ({ children }) => {
     {
       path: '/message-template',
       name: 'Message Templates'
+    },
+    {
+      path: '/quote-generator',
+      name: 'Quote Generator'
     }
     // Thêm các tool khác ở đây sau này
   ]
